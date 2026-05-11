@@ -8,12 +8,12 @@
 
 ## Overview
 
-Most period tracking applications predict when your next period will start. CycleAware goes deeper — it predicts two things that no existing app addresses specifically:
+Most period tracking applications predict when your next period will start. CycleAware goes deeper it predicts two things that no existing app addresses specifically:
 
 1. **Will spotting occur this cycle?** (Yes / No)
 2. **If spotting occurs, how many days before bleeding begins?**
 
-This distinction matters in real life. Many people experience spotting before their period begins, with a gap of 1 to 5 days before bleeding starts. This gap varies month to month based on stress, lifestyle, health conditions, and personal history. CycleAware learns your pattern and gives you an early warning — so you are never caught off guard.
+This distinction matters in real life. Many people experience spotting before their period begins, with a gap of 1 to 5 days before bleeding starts. This gap varies month to month based on stress, lifestyle, health conditions, and personal history. CycleAware learns your pattern and gives you an early warning  so you are never caught off guard.
 
 ---
 
@@ -21,7 +21,7 @@ This distinction matters in real life. Many people experience spotting before th
 
 Spotting patterns are highly personal and inconsistent. Some months the gap is 3 days, some months it is 1 day, and occasionally a cycle skips spotting entirely and goes straight to bleeding. Existing period apps treat the period as a single event and do not model this internal structure.
 
-CycleAware was built to solve exactly this gap — predicting not just when your period starts, but how it will start.
+CycleAware was built to solve exactly this gap  predicting not just when your period starts, but how it will start.
 
 ---
 
