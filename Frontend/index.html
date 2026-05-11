@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>CycleAware</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --rose: #C0334D; --rose-light: #E8607A; --rose-pale: #FDF0F2;
+    --rose-dark: #8C1F35; --plum: #5C2D52; --cream: #FDFAF8;
+    --text: #1A1018; --text-soft: #6B5B65; --border: #E8D8DE;
+    --white: #FFFFFF; --shadow: 0 4px 24px rgba(100,30,50,0.08);
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--cream); font-family: var(--font-sans); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+  .app { max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+  /* Pages */
+  .page { display: none; flex-direction: column; flex: 1; min-height: 100vh; overflow-y: auto; }
+  .page.active { display: flex; }
+
+  /* Hero */
+  .hero { background: linear-gradient(155deg, var(--rose-dark) 0%, var(--plum) 100%); padding: 60px 32px 44px; text-align: center; position: relative; overflow: hidden; flex-shrink: 0; }
+  .hero::before { content: ''; position: absolute; width: 240px; height: 240px; border-radius: 50%; background: rgba(255,255,255,0.04); top: -70px; right: -60px; }
+  .hero::after  { content: ''; position: absolute; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,0.03); bottom: -40px; left: -30px; }
+  .hero-monogram { width: 56px; height: 56px; border-radius: 16px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .hero-monogram span { font-family: var(--font-serif); font-size: 22px; color: white; font-weight: 600; }
+  .hero-title { font-family: var(--font-serif); font-size: 32px; color: white; line-height: 1.2; margin-bottom: 12px; font-weight: 400; position: relative; letter-spacing: -0.3px; }
+  .hero-title em { font-style: italic; }
+  .hero-sub { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.7; max-width: 280px; margin: 0 auto; position: relative; font-weight: 300; letter-spacing: 0.1px; }
+
+  /* Sub-page header */
+  .sub-header { background: var(--white); border-bottom: 1px solid var(--border); padding: 52px 20px 16px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  .back-btn { background: var(--rose-pale); border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-family: var(--font-sans); color: var(--rose-dark); cursor: pointer; font-weight: 500; white-space: nowrap; letter-spacing: 0.2px; }
+  .sub-header-title { font-family: var(--font-serif); font-size: 17px; color: var(--text); font-weight: 600; }
+
+  /* Page body */
+  .page-body { padding: 24px; flex: 1; }
+
+  /* Section label */
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--rose); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Welcome nav cards */
+  .nav-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 12px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+  .nav-card:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(100,30,50,0.12); }
+  .nav-card:active { transform: scale(0.98); }
+  .nav-card-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .bg-rose { background: var(--rose-pale); }
+  .bg-plum { background: #F3EEF6; }
+  .nav-icon-text { font-family: var(--font-serif); font-size: 18px; color: var(--rose-dark); font-weight: 600; font-style: italic; }
+  .nav-icon-text-plum { font-family: var(--font-serif); font-size: 18px; color: var(--plum); font-weight: 600; }
+  .nav-card-text { flex: 1; }
+  .nav-card-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; color: var(--text); letter-spacing: -0.1px; }
+  .nav-card-desc  { font-size: 12px; color: var(--text-soft); line-height: 1.55; font-weight: 400; }
+  .nav-card-arrow { font-size: 16px; color: var(--border); font-weight: 300; }
+
+  /* About page */
+  .about-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .about-point { display: flex; gap: 16px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .about-point:first-child { padding-top: 0; }
+  .about-point:last-child { border-bottom: none; padding-bottom: 0; }
+  .about-marker { width: 28px; height: 28px; border-radius: 8px; background: var(--rose-pale); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .about-marker span { font-family: var(--font-serif); font-size: 12px; color: var(--rose-dark); font-weight: 600; }
+  .about-title { font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--text); letter-spacing: -0.1px; }
+  .about-desc  { font-size: 13px; color: var(--text-soft); line-height: 1.65; font-weight: 400; }
+  .about-desc strong { color: var(--text); font-weight: 600; }
+
+  /* Features page */
+  .feature-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .feature-header { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+  .feature-marker { width: 34px; height: 34px; border-radius: 10px; background: var(--rose-pale); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .feature-marker span { font-family: var(--font-serif); font-size: 13px; color: var(--rose-dark); font-weight: 600; font-style: italic; }
+  .feature-name    { font-size: 13px; font-weight: 600; flex: 1; color: var(--text); letter-spacing: -0.1px; }
+  .feature-chevron { font-size: 11px; color: var(--text-soft); transition: transform 0.3s; display: inline-block; font-weight: 500; }
+  .feature-chevron.open { transform: rotate(180deg); }
+  .feature-body { font-size: 13px; color: var(--text-soft); line-height: 1.7; display: none; padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--border); font-weight: 400; }
+  .feature-body.open { display: block; }
+  .feature-body strong { color: var(--text); font-weight: 600; }
+
+  /* BMI box */
+  .bmi-box { background: var(--rose-pale); border-radius: 10px; padding: 16px; margin-top: 14px; }
+  .bmi-formula { font-family: var(--font-serif); font-size: 15px; font-weight: 600; color: var(--rose-dark); text-align: center; margin-bottom: 5px; }
+  .bmi-example { font-size: 12px; color: var(--text-soft); text-align: center; margin-bottom: 14px; }
+  .bmi-ranges  { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .bmi-range   { background: var(--white); border-radius: 8px; padding: 9px 11px; }
+  .bmi-range-label { font-size: 12px; font-weight: 600; color: var(--text); }
+  .bmi-range-val   { font-size: 11px; color: var(--text-soft); margin-top: 1px; }
+
+  /* Main app header */
+  .main-header { padding: 52px 24px 18px; background: var(--white); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .header-logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--rose-dark), var(--plum)); display: flex; align-items: center; justify-content: center; }
+  .logo-mark span { font-family: var(--font-serif); font-size: 14px; color: white; font-weight: 600; font-style: italic; }
+  .logo-name { font-family: var(--font-serif); font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-name em { color: var(--rose); font-style: normal; }
+  .header-sub { font-size: 11px; color: var(--text-soft); margin-top: 3px; margin-left: 40px; font-weight: 400; letter-spacing: 0.1px; }
+  .progress-wrap  { padding: 14px 24px 0; background: var(--white); flex-shrink: 0; }
+  .progress-steps { display: flex; gap: 5px; }
+  .progress-step  { flex: 1; height: 2px; border-radius: 2px; background: var(--border); transition: background 0.4s; }
+  .progress-step.done   { background: var(--rose); }
+  .progress-step.active { background: linear-gradient(90deg, var(--rose-dark), var(--rose-light)); }
+  .progress-label { font-size: 10px; color: var(--text-soft); margin-top: 8px; padding-bottom: 14px; font-weight: 500; letter-spacing: 0.3px; text-transform: uppercase; }
+
+  /* Prediction screens */
+  .screens { flex: 1; overflow: hidden; position: relative; }
+  .screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 24px; overflow-y: auto; transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s; opacity: 0; transform: translateX(100%); pointer-events: none; }
+  .screen.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+  .screen.exit   { opacity: 0; transform: translateX(-60%); }
+  .screen-title { font-family: var(--font-serif); font-size: 26px; line-height: 1.2; margin-bottom: 6px; font-weight: 400; letter-spacing: -0.3px; }
+  .screen-title em { color: var(--rose); font-style: italic; }
+  .screen-desc  { font-size: 13px; color: var(--text-soft); margin-bottom: 24px; line-height: 1.6; font-weight: 400; }
+
+  /* Cards */
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card-title { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-soft); margin-bottom: 16px; }
+
+  /* Form elements */
+  .field { margin-bottom: 16px; }
+  .field label { font-size: 13px; font-weight: 500; display: block; margin-bottom: 7px; color: var(--text); }
+  .field input[type=number] { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: var(--font-sans); background: var(--cream); color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .field input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px rgba(192,51,77,0.08); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .slider-wrap { display: flex; align-items: center; gap: 12px; }
+  .slider-wrap input[type=range] { flex: 1; -webkit-appearance: none; height: 3px; border-radius: 2px; background: var(--border); outline: none; }
+  .slider-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--rose); cursor: pointer; box-shadow: 0 2px 8px rgba(192,51,77,0.3); }
+  .slider-val { font-size: 14px; font-weight: 600; color: var(--rose); min-width: 24px; text-align: center; font-family: var(--font-serif); }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-soft); margin-top: 5px; font-weight: 500; letter-spacing: 0.2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 8px 16px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 13px; cursor: pointer; transition: all 0.2s; background: var(--cream); color: var(--text-soft); font-family: var(--font-sans); font-weight: 500; }
+  .chip.selected { background: var(--rose-dark); border-color: var(--rose-dark); color: white; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+  .toggle-label { font-size: 13px; font-weight: 400; color: var(--text); }
+  .toggle { width: 42px; height: 24px; border-radius: 12px; background: var(--border); position: relative; cursor: pointer; transition: background 0.3s; flex-shrink: 0; }
+  .toggle.on { background: var(--rose); }
+  .toggle::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  .toggle.on::after { transform: translateX(18px); }
+
+  /* Buttons */
+  .btn-primary { width: 100%; padding: 15px; background: var(--rose-dark); color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; margin-top: 8px; letter-spacing: 0.2px; transition: background 0.2s, transform 0.15s; }
+  .btn-primary:hover { background: var(--rose); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary { width: 100%; padding: 13px; background: transparent; color: var(--text-soft); border: 1.5px solid var(--border); border-radius: 12px; font-size: 13px; font-family: var(--font-sans); cursor: pointer; margin-top: 8px; font-weight: 500; transition: background 0.2s; }
+  .btn-secondary:hover { background: var(--rose-pale); }
+
+  /* Results */
+  .result-hero { background: linear-gradient(135deg, var(--rose-dark) 0%, var(--plum) 100%); border-radius: 20px; padding: 32px 24px; margin-bottom: 14px; color: white; text-align: center; position: relative; overflow: hidden; }
+  .result-hero::before { content: ''; position: absolute; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.05); top: -40px; right: -40px; }
+  .result-label-top { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 10px; font-weight: 500; position: relative; }
+  .result-prob  { font-family: var(--font-serif); font-size: 58px; color: white; line-height: 1; font-weight: 400; position: relative; }
+  .result-prob-label { font-size: 12px; opacity: 0.65; margin-top: 6px; margin-bottom: 18px; font-weight: 400; position: relative; }
+  .result-badge { display: inline-block; padding: 6px 18px; border-radius: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; position: relative; }
+  .badge-likely    { background: rgba(255,255,255,0.15); color: white; }
+  .badge-unlikely  { background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.9); }
+  .badge-uncertain { background: rgba(230,180,60,0.25); color: #FFD888; }
+  .result-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px; }
+  .result-row  { display: flex; align-items: flex-start; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .result-row:first-child { padding-top: 0; }
+  .result-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .result-row-marker { width: 32px; height: 32px; border-radius: 8px; background: var(--rose-pale); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .result-row-marker span { font-family: var(--font-serif); font-size: 12px; color: var(--rose-dark); font-weight: 600; }
+  .result-row-label { font-size: 10px; color: var(--text-soft); font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 3px; }
+  .result-row-val   { font-size: 14px; font-weight: 600; color: var(--text); }
+  .rec-box { background: var(--rose-pale); border: 1px solid #E8C0C8; border-radius: 14px; padding: 18px; margin-bottom: 12px; }
+  .rec-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--rose-dark); margin-bottom: 8px; }
+  .rec-box p { font-size: 13px; line-height: 1.75; color: var(--text); font-weight: 400; }
+  .rec-box strong { color: var(--rose-dark); font-weight: 600; }
+
+  /* Loading */
+  .loading-screen { display: none; position: absolute; inset: 0; background: var(--cream); z-index: 10; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+  .loading-screen.show { display: flex; }
+  .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--rose); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--text-soft); font-weight: 400; letter-spacing: 0.2px; }
+
+  /* Error */
+  .error-box { background: #FFF0F2; border: 1px solid #F0B0BC; border-radius: 10px; padding: 12px 16px; margin-top: 10px; font-size: 12px; color: var(--rose-dark); display: none; font-weight: 500; }
+  .error-box.show { display: block; }
+
+  /* Footer */
+  .nav-hint { font-size: 11px; color: var(--text-soft); text-align: center; padding: 12px; background: var(--white); border-top: 1px solid var(--border); flex-shrink: 0; font-weight: 400; letter-spacing: 0.1px; }
+  .welcome-cta { padding: 8px 24px 36px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ════════════════════════ PAGE 1: WELCOME ════════════════════════ -->
+  <div class="page active" id="page-welcome">
+    <div class="hero">
+      <div class="hero-monogram"><span>CA</span></div>
+      <div class="hero-title">Welcome to<br/><em>CycleAware</em></div>
+      <div class="hero-sub">A personal early warning system for spotting and bleeding — built around your unique cycle pattern.</div>
+    </div>
+
+    <div class="page-body">
+      <div class="section-label">Before you begin</div>
+
+      <div class="nav-card" onclick="showPage('page-about')">
+        <div class="nav-card-icon bg-rose">
+          <span class="nav-icon-text">Ab</span>
+        </div>
+        <div class="nav-card-text">
+          <div class="nav-card-title">About this App</div>
+          <div class="nav-card-desc">What CycleAware does, how it works, and what the 3 sections cover.</div>
+        </div>
+        <div class="nav-card-arrow">›</div>
+      </div>
+
+      <div class="nav-card" onclick="showPage('page-features')">
+        <div class="nav-card-icon bg-plum">
+          <span class="nav-icon-text-plum">Ft</span>
+        </div>
+        <div class="nav-card-text">
+          <div class="nav-card-title">Understanding the Features</div>
+          <div class="nav-card-desc">What each input means, how to find your BMI, and how to rate your symptoms.</div>
+        </div>
+        <div class="nav-card-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="welcome-cta">
+      <button class="btn-primary" onclick="showPage('page-main')">Get Started</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════ PAGE 2: ABOUT ════════════════════════ -->
+  <div class="page" id="page-about">
+    <div class="sub-header">
+      <button class="back-btn" onclick="showPage('page-welcome')">← Back</button>
+      <div class="sub-header-title">About this App</div>
+    </div>
+
+    <div class="page-body">
+      <div class="section-label">What it does</div>
+      <div class="about-card">
+        <div class="about-point">
+          <div class="about-marker"><span>01</span></div>
+          <div>
+            <div class="about-title">What does CycleAware predict?</div>
+            <div class="about-desc">It predicts two things — <strong>whether your next cycle will start with spotting</strong>, and if so, <strong>how many days before bleeding begins.</strong> This helps you prepare in advance and never be caught off guard.</div>
+          </div>
+        </div>
+        <div class="about-point">
+          <div class="about-marker"><span>02</span></div>
+          <div>
+            <div class="about-title">How is it different from other period apps?</div>
+            <div class="about-desc">Most apps predict when your period starts. CycleAware goes deeper — it predicts the <strong>spotting-to-bleeding gap</strong>, which varies from person to person and month to month based on stress, health, and history. No existing app addresses this specifically.</div>
+          </div>
+        </div>
+        <div class="about-point">
+          <div class="about-marker"><span>03</span></div>
+          <div>
+            <div class="about-title">How does it work?</div>
+            <div class="about-desc">It uses a <strong>machine learning model</strong> trained on diverse cycle patterns across different ages, conditions, and lifestyles. The more accurately you fill in the details, the more personalised your prediction will be.</div>
+          </div>
+        </div>
+        <div class="about-point">
+          <div class="about-marker"><span>!</span></div>
+          <div>
+            <div class="about-title">Important note</div>
+            <div class="about-desc">CycleAware is an <strong>indicative tool</strong>, not a medical device. Predictions are based on patterns and may not always be accurate. Always consult a doctor for medical concerns.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">The 3 sections</div>
+      <div class="about-card">
+        <div class="about-point">
+          <div class="about-marker"><span>I</span></div>
+          <div>
+            <div class="about-title">Section 1 — About You</div>
+            <div class="about-desc">Your <strong>age, BMI, medical condition, contraceptive use</strong> and typical spotting gap. These are static details that form your biological baseline and do not change month to month.</div>
+          </div>
+        </div>
+        <div class="about-point">
+          <div class="about-marker"><span>II</span></div>
+          <div>
+            <div class="about-title">Section 2 — This Cycle</div>
+            <div class="about-desc">How you have been feeling <strong>this month</strong> — stress, sleep, mood, hydration, pain, activity level, cycle length, and whether you have had any travel disruption or illness. These change every cycle and directly influence the prediction.</div>
+          </div>
+        </div>
+        <div class="about-point">
+          <div class="about-marker"><span>III</span></div>
+          <div>
+            <div class="about-title">Section 3 — Your History</div>
+            <div class="about-desc">What happened in your <strong>last 1–2 cycles</strong> — whether spotting occurred, how long the gap was, how many months in a row you have had spotting, and your overall spotting rate. History is the strongest signal the model uses.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="welcome-cta">
+      <button class="btn-primary" onclick="showPage('page-main')">Get Started</button>
+      <button class="btn-secondary" onclick="showPage('page-welcome')">Back to Welcome</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════ PAGE 3: FEATURES ════════════════════════ -->
+  <div class="page" id="page-features">
+    <div class="sub-header">
+      <button class="back-btn" onclick="showPage('page-welcome')">← Back</button>
+      <div class="sub-header-title">Understanding Features</div>
+    </div>
+
+    <div class="page-body">
+      <div class="section-label">Section 1 — About You</div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('bmi')">
+          <div class="feature-marker"><span>Bm</span></div>
+          <div class="feature-name">BMI (Body Mass Index)</div>
+          <span class="feature-chevron" id="bmi-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="bmi-body">
+          BMI measures your body weight relative to your height. It influences hormonal balance which affects cycle regularity and spotting patterns. Here is how to calculate it:
+          <div class="bmi-box">
+            <div class="bmi-formula">BMI = Weight (kg) ÷ Height² (m²)</div>
+            <div class="bmi-example">Example: 60 kg ÷ (1.65 × 1.65) = <strong>22.0</strong></div>
+            <div class="bmi-ranges">
+              <div class="bmi-range"><div class="bmi-range-label">Underweight</div><div class="bmi-range-val">Below 18.5</div></div>
+              <div class="bmi-range"><div class="bmi-range-label">Normal</div><div class="bmi-range-val">18.5 – 24.9</div></div>
+              <div class="bmi-range"><div class="bmi-range-label">Overweight</div><div class="bmi-range-val">25.0 – 29.9</div></div>
+              <div class="bmi-range"><div class="bmi-range-label">Obese</div><div class="bmi-range-val">30 and above</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('base-gap')">
+          <div class="feature-marker"><span>Pg</span></div>
+          <div class="feature-name">Personal Base Gap</div>
+          <span class="feature-chevron" id="base-gap-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="base-gap-body">
+          Your typical number of days between spotting starting and bleeding beginning. Think back over your last few cycles — if spotting usually lasts 3 days before flow starts, set this to 3. This is the <strong>single strongest predictor</strong> in the model.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('condition')">
+          <div class="feature-marker"><span>Mc</span></div>
+          <div class="feature-name">Medical Condition</div>
+          <span class="feature-chevron" id="condition-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="condition-body">
+          Select any diagnosed cycle-related condition. <strong>PCOS</strong> and <strong>endometriosis</strong> significantly increase spotting probability and can affect gap length. <strong>Thyroid</strong> disorders also influence hormonal regulation. Select None if you have no diagnosed condition.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('contra')">
+          <div class="feature-marker"><span>Cv</span></div>
+          <div class="feature-name">Contraceptive</div>
+          <span class="feature-chevron" id="contra-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="contra-body">
+          Certain contraceptives affect spotting. The <strong>pill</strong> and <strong>implant</strong> tend to reduce spotting probability by regulating hormones. The <strong>IUD</strong> (especially non-hormonal) can sometimes increase irregular spotting. Select None if you do not use any.
+        </div>
+      </div>
+
+      <div class="section-label">Section 2 — This Cycle</div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('cycle-len')">
+          <div class="feature-marker"><span>Cl</span></div>
+          <div class="feature-name">Cycle Length</div>
+          <span class="feature-chevron" id="cycle-len-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="cycle-len-body">
+          The number of days from the first day of your last period to the first day of your current period. A typical cycle is <strong>21–35 days</strong>. When your cycle length deviates significantly from your usual average, spotting is more likely to occur.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('stress')">
+          <div class="feature-marker"><span>St</span></div>
+          <div class="feature-name">Stress Level</div>
+          <span class="feature-chevron" id="stress-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="stress-body">
+          Rate how stressed you have been this month on a scale of 1 to 10. High stress (<strong>7–10</strong>) raises cortisol which disrupts estrogen and progesterone — this often <strong>shortens the spotting-to-bleeding gap</strong> and increases the likelihood of spotting occurring.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('sleep')">
+          <div class="feature-marker"><span>Sl</span></div>
+          <div class="feature-name">Sleep Quality</div>
+          <span class="feature-chevron" id="sleep-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="sleep-body">
+          Rate your average sleep quality this month from 1 (very poor) to 10 (excellent). Poor sleep is linked to hormonal imbalance. Sleep and stress are closely connected — <strong>low sleep often means high stress</strong>, which in turn affects your cycle.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('mood')">
+          <div class="feature-marker"><span>Md</span></div>
+          <div class="feature-name">Mood Score</div>
+          <span class="feature-chevron" id="mood-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="mood-body">
+          Rate your overall mood this month from 1 (very low) to 10 (very positive). Mood is an indirect signal of hormonal balance and stress levels. Consistently low mood often correlates with hormonal shifts that affect cycle patterns.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('hydration')">
+          <div class="feature-marker"><span>Hy</span></div>
+          <div class="feature-name">Hydration Level</div>
+          <span class="feature-chevron" id="hydration-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="hydration-body">
+          Rate how well hydrated you have been this month from 1 (very dehydrated) to 10 (well hydrated). Hydration affects circulation and body regulation. Higher activity levels typically require higher hydration.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('activity')">
+          <div class="feature-marker"><span>Ac</span></div>
+          <div class="feature-name">Activity Level</div>
+          <span class="feature-chevron" id="activity-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="activity-body">
+          How physically active have you been this month? <strong>Low</strong> means mostly sedentary, <strong>Moderate</strong> means regular light exercise, <strong>High</strong> means intense or frequent workouts. High activity generally helps regulate cycles, but extreme exercise can disrupt them.
+        </div>
+      </div>
+
+      <div class="section-label">Section 3 — Your History</div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('spot-rate')">
+          <div class="feature-marker"><span>Sr</span></div>
+          <div class="feature-name">Personal Spotting Rate</div>
+          <span class="feature-chevron" id="spot-rate-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="spot-rate-body">
+          How often do you get spotting across your cycles? If spotting happens in 3 out of every 5 months, your rate is <strong>0.60</strong>. If it almost never happens, set it closer to <strong>0</strong>. If it almost always happens, set it closer to <strong>1</strong>.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('gap-var')">
+          <div class="feature-marker"><span>Gv</span></div>
+          <div class="feature-name">Gap Variability</div>
+          <span class="feature-chevron" id="gap-var-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="gap-var-body">
+          How consistent is your spotting-to-bleeding gap across months? If your gap is <strong>always the same</strong> — set near 0. If it <strong>changes significantly each month</strong> — set near 1. Higher variability means predictions are slightly less certain.
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-header" onclick="toggleFeature('streak')">
+          <div class="feature-marker"><span>Cs</span></div>
+          <div class="feature-name">Consecutive Spotting Months</div>
+          <span class="feature-chevron" id="streak-chevron">▼</span>
+        </div>
+        <div class="feature-body" id="streak-body">
+          How many months in a row have you had spotting before this cycle? If last month had spotting and the month before also did, enter <strong>2</strong>. This streak pattern is an important signal — long streaks slightly reduce the probability of spotting continuing indefinitely.
+        </div>
+      </div>
+
+    </div>
+
+    <div class="welcome-cta">
+      <button class="btn-primary" onclick="showPage('page-main')">Get Started</button>
+      <button class="btn-secondary" onclick="showPage('page-welcome')">Back to Welcome</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════ PAGE 4: MAIN APP ════════════════════════ -->
+  <div class="page" id="page-main">
+    <div class="main-header">
+      <div class="header-logo">
+        <div class="logo-mark"><span>CA</span></div>
+        <div class="logo-name">Cycle<em>Aware</em></div>
+      </div>
+      <div class="header-sub">Personal cycle prediction tool</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="progress-step active" id="ps1"></div>
+        <div class="progress-step" id="ps2"></div>
+        <div class="progress-step" id="ps3"></div>
+        <div class="progress-step" id="ps4"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">Step 1 of 3 — About You</div>
+    </div>
+
+    <div class="screens">
+      <div class="loading-screen" id="loadingScreen">
+        <div class="spinner"></div>
+        <div class="loading-text">Analysing your cycle pattern...</div>
+      </div>
+
+      <!-- Screen 1 -->
+      <div class="screen active" id="screen1">
+        <div class="screen-title">Tell us about <em>you</em></div>
+        <div class="screen-desc">These details help personalise your prediction based on your biology.</div>
+        <div class="card">
+          <div class="card-title">Basic Information</div>
+          <div class="field-row">
+            <div class="field"><label>Age</label><input type="number" id="age" placeholder="e.g. 25" min="13" max="45"/></div>
+            <div class="field"><label>BMI</label><input type="number" id="bmi" placeholder="e.g. 22.5" step="0.1"/></div>
+          </div>
+          <div class="field">
+            <label>Typical spotting gap (days before bleeding)</label>
+            <div class="slider-wrap">
+              <input type="range" id="personal_base_gap" min="1" max="5" value="3" oninput="document.getElementById('pgv').textContent=this.value"/>
+              <div class="slider-val" id="pgv">3</div>
+            </div>
+            <div class="slider-labels"><span>1 day</span><span>5 days</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Medical Condition</div>
+          <div class="chips" id="conditionChips">
+            <div class="chip selected" data-val="none" onclick="selectChip('conditionChips',this)">None</div>
+            <div class="chip" data-val="PCOS" onclick="selectChip('conditionChips',this)">PCOS</div>
+            <div class="chip" data-val="endometriosis" onclick="selectChip('conditionChips',this)">Endometriosis</div>
+            <div class="chip" data-val="thyroid" onclick="selectChip('conditionChips',this)">Thyroid</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Contraceptive Use</div>
+          <div class="chips" id="contraChips">
+            <div class="chip selected" data-val="none" onclick="selectChip('contraChips',this)">None</div>
+            <div class="chip" data-val="pill" onclick="selectChip('contraChips',this)">Pill</div>
+            <div class="chip" data-val="IUD" onclick="selectChip('contraChips',this)">IUD</div>
+            <div class="chip" data-val="implant" onclick="selectChip('contraChips',this)">Implant</div>
+          </div>
+        </div>
+        <div id="err1" class="error-box">Please enter your age and BMI to continue.</div>
+        <button class="btn-primary" onclick="goTo(2)">Continue</button>
+      </div>
+
+      <!-- Screen 2 -->
+      <div class="screen" id="screen2">
+        <div class="screen-title">This <em>cycle</em></div>
+        <div class="screen-desc">Tell us about your cycle details and how you have been feeling this month.</div>
+        <div class="card">
+          <div class="card-title">Cycle Details</div>
+          <div class="field-row">
+            <div class="field"><label>Cycle length (days)</label><input type="number" id="cycle_length" placeholder="e.g. 28" min="21" max="45"/></div>
+            <div class="field"><label>Current month (1–12)</label><input type="number" id="month_number" placeholder="e.g. 5" min="1" max="12" oninput="autoDetectSeason(this.value)"/></div>
+          </div>
+          <div class="field">
+            <label>Season <span style="font-size:11px;color:var(--text-soft);font-weight:400;">(auto-detected from month)</span></label>
+            <div id="seasonDisplay" style="padding:11px 14px;background:var(--cream);border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--text-soft);">Enter month number above to detect season</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Wellbeing This Month</div>
+          <div class="field">
+            <label>Stress level</label>
+            <div class="slider-wrap"><input type="range" id="stress_level" min="1" max="10" value="5" oninput="document.getElementById('slv').textContent=this.value"/><div class="slider-val" id="slv">5</div></div>
+            <div class="slider-labels"><span>Low</span><span>High</span></div>
+          </div>
+          <div class="field">
+            <label>Sleep quality</label>
+            <div class="slider-wrap"><input type="range" id="sleep_quality" min="1" max="10" value="7" oninput="document.getElementById('sqv').textContent=this.value"/><div class="slider-val" id="sqv">7</div></div>
+            <div class="slider-labels"><span>Poor</span><span>Excellent</span></div>
+          </div>
+          <div class="field">
+            <label>Mood score</label>
+            <div class="slider-wrap"><input type="range" id="mood_score" min="1" max="10" value="6" oninput="document.getElementById('msv').textContent=this.value"/><div class="slider-val" id="msv">6</div></div>
+            <div class="slider-labels"><span>Low</span><span>High</span></div>
+          </div>
+          <div class="field">
+            <label>Hydration level</label>
+            <div class="slider-wrap"><input type="range" id="hydration_level" min="1" max="10" value="6" oninput="document.getElementById('hlv').textContent=this.value"/><div class="slider-val" id="hlv">6</div></div>
+            <div class="slider-labels"><span>Low</span><span>High</span></div>
+          </div>
+          <div class="field">
+            <label>Pain level</label>
+            <div class="slider-wrap"><input type="range" id="pain_level" min="1" max="10" value="4" oninput="document.getElementById('plv').textContent=this.value"/><div class="slider-val" id="plv">4</div></div>
+            <div class="slider-labels"><span>None</span><span>Severe</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Activity and Disruptions</div>
+          <div class="field">
+            <label>Activity level</label>
+            <div class="chips" id="activityChips">
+              <div class="chip" data-val="0" onclick="selectChip('activityChips',this)">Low</div>
+              <div class="chip selected" data-val="1" onclick="selectChip('activityChips',this)">Moderate</div>
+              <div class="chip" data-val="2" onclick="selectChip('activityChips',this)">High</div>
+            </div>
+          </div>
+          <div class="toggle-row" style="margin-top:10px;"><span class="toggle-label">Travelled or routine disrupted this month?</span><div class="toggle" id="travelToggle" onclick="toggleIt('travelToggle')"></div></div>
+          <div class="toggle-row" style="margin-top:6px;"><span class="toggle-label">Had a recent illness or infection?</span><div class="toggle" id="illnessToggle" onclick="toggleIt('illnessToggle')"></div></div>
+        </div>
+        <div id="err2" class="error-box">Please enter cycle length and month number to continue.</div>
+        <button class="btn-primary" onclick="goTo(3)">Continue</button>
+        <button class="btn-secondary" onclick="goTo(1)">Back</button>
+      </div>
+
+      <!-- Screen 3 -->
+      <div class="screen" id="screen3">
+        <div class="screen-title">Your <em>history</em></div>
+        <div class="screen-desc">Help us understand your recent cycle pattern for a more accurate prediction.</div>
+        <div class="card">
+          <div class="card-title">Previous Cycles</div>
+          <div class="toggle-row"><span class="toggle-label">Did last month have spotting?</span><div class="toggle" id="prevSpotToggle" onclick="toggleIt('prevSpotToggle')"></div></div>
+          <div class="toggle-row" style="margin-top:6px;"><span class="toggle-label">Did two months ago have spotting?</span><div class="toggle" id="twoMonthToggle" onclick="toggleIt('twoMonthToggle')"></div></div>
+          <div class="field" style="margin-top:16px;">
+            <label>Last month's spotting gap (days)</label>
+            <div class="slider-wrap"><input type="range" id="prev_cycle_gap" min="1" max="5" value="3" oninput="document.getElementById('pcgv').textContent=this.value"/><div class="slider-val" id="pcgv">3</div></div>
+            <div class="slider-labels"><span>1 day</span><span>5 days</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Pattern and Streak</div>
+          <div class="field"><label>Consecutive spotting months in a row</label><input type="number" id="consecutive_spotting_months" placeholder="e.g. 2" min="0" max="36" value="0"/></div>
+          <div class="field">
+            <label>Personal spotting rate (0 to 1)</label>
+            <div class="slider-wrap"><input type="range" id="personal_spotting_rate" min="0" max="100" value="50" oninput="document.getElementById('psrv').textContent=(this.value/100).toFixed(2)"/><div class="slider-val" id="psrv">0.50</div></div>
+            <div class="slider-labels"><span>Never</span><span>Always</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Flow and Variability</div>
+          <div class="field">
+            <label>Last period flow intensity</label>
+            <div class="chips" id="flowChips">
+              <div class="chip selected" data-val="0" onclick="selectChip('flowChips',this)">Light</div>
+              <div class="chip" data-val="1" onclick="selectChip('flowChips',this)">Medium</div>
+              <div class="chip" data-val="2" onclick="selectChip('flowChips',this)">Heavy</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Gap variability (how much your gap changes month to month)</label>
+            <div class="slider-wrap"><input type="range" id="gap_variability" min="0" max="200" value="50" oninput="document.getElementById('gvv').textContent=(this.value/100).toFixed(2)"/><div class="slider-val" id="gvv">0.50</div></div>
+            <div class="slider-labels"><span>Consistent</span><span>Variable</span></div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="submitPrediction()">Get Prediction</button>
+        <button class="btn-secondary" onclick="goTo(2)">Back</button>
+      </div>
+
+      <!-- Screen 4: Results -->
+      <div class="screen" id="screen4">
+        <div class="screen-title">Your <em>prediction</em></div>
+        <div class="screen-desc">Based on your cycle history and current cycle details.</div>
+        <div class="result-hero">
+          <div class="result-label-top">Spotting Probability</div>
+          <div class="result-prob" id="resultProb">—</div>
+          <div class="result-prob-label">likelihood of spotting this cycle</div>
+          <div class="result-badge" id="resultBadge">—</div>
+        </div>
+        <div class="result-card">
+          <div class="result-row">
+            <div class="result-row-marker"><span>G</span></div>
+            <div>
+              <div class="result-row-label">Gap Prediction</div>
+              <div class="result-row-val" id="resultGap">—</div>
+            </div>
+          </div>
+          <div class="result-row">
+            <div class="result-row-marker"><span>S</span></div>
+            <div>
+              <div class="result-row-label">Safe Window</div>
+              <div class="result-row-val" id="resultSafe">—</div>
+            </div>
+          </div>
+          <div class="result-row">
+            <div class="result-row-marker"><span>P</span></div>
+            <div>
+              <div class="result-row-label">Spotting Predicted</div>
+              <div class="result-row-val" id="resultSpotting">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="rec-box">
+          <div class="rec-label">Recommendation</div>
+          <p id="resultRecommendation">—</p>
+        </div>
+        <button class="btn-primary" onclick="resetApp()">New Prediction</button>
+      </div>
+    </div>
+
+    <div class="nav-hint">CycleAware &nbsp;·&nbsp; Indicative only, not medical advice</div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+let currentScreen = 1;
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById(id).scrollTop = 0;
+}
+
+function toggleFeature(id) {
+  document.getElementById(id + '-body').classList.toggle('open');
+  document.getElementById(id + '-chevron').classList.toggle('open');
+}
+
+function goTo(n) {
+  if (n === 2) {
+    const age = parseFloat(document.getElementById('age').value);
+    const bmi = parseFloat(document.getElementById('bmi').value);
+    if (!age || !bmi) { document.getElementById('err1').classList.add('show'); return; }
+    document.getElementById('err1').classList.remove('show');
+  }
+  if (n === 3) {
+    const cl = parseFloat(document.getElementById('cycle_length').value);
+    const mn = parseFloat(document.getElementById('month_number').value);
+    if (!cl || !mn) { document.getElementById('err2').classList.add('show'); return; }
+    document.getElementById('err2').classList.remove('show');
+  }
+  transition(currentScreen, n);
+}
+
+function transition(from, to) {
+  const old  = document.getElementById('screen' + from);
+  const next = document.getElementById('screen' + to);
+  old.classList.remove('active'); old.classList.add('exit');
+  setTimeout(() => old.classList.remove('exit'), 400);
+  next.classList.add('active');
+  currentScreen = to;
+  updateProgress(to);
+  next.scrollTop = 0;
+}
+
+function updateProgress(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('ps' + i);
+    el.className = 'progress-step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  const labels = ['','Step 1 of 3 — About You','Step 2 of 3 — This Cycle','Step 3 of 3 — Your History','Prediction Result'];
+  document.getElementById('progressLabel').textContent = labels[n];
+}
+
+function selectChip(groupId, el) {
+  document.querySelectorAll('#' + groupId + ' .chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function toggleIt(id) { document.getElementById(id).classList.toggle('on'); }
+function getChipVal(groupId) {
+  const sel = document.querySelector('#' + groupId + ' .chip.selected');
+  return sel ? sel.dataset.val : null;
+}
+function getToggleVal(id) { return document.getElementById(id).classList.contains('on') ? 1 : 0; }
+
+function autoDetectSeason(month) {
+  month = parseInt(month);
+  let label = '';
+  if ([3,4,5].includes(month))        label = 'Summer';
+  else if ([6,7,8,9].includes(month)) label = 'Monsoon';
+  else if ([10,11].includes(month))   label = 'Autumn';
+  else if ([12,1,2].includes(month))  label = 'Winter';
+  const el = document.getElementById('seasonDisplay');
+  el.textContent = label ? label + ' (detected from month ' + month + ')' : 'Enter a valid month (1–12)';
+  el.style.color = label ? 'var(--text)' : 'var(--text-soft)';
+}
+
+function getSeasonFromMonth(month) {
+  month = parseInt(month);
+  if ([3,4,5].includes(month))        return 'summer';
+  if ([6,7,8,9].includes(month))      return 'monsoon';
+  if ([10,11].includes(month))        return 'autumn';
+  return 'winter';
+}
+
+function buildPayload() {
+  const condition     = getChipVal('conditionChips') || 'none';
+  const contraceptive = getChipVal('contraChips') || 'none';
+  const month         = parseFloat(document.getElementById('month_number').value);
+  const season        = getSeasonFromMonth(month);
+  const stress        = parseFloat(document.getElementById('stress_level').value);
+  const age           = parseFloat(document.getElementById('age').value);
+  const bmi           = parseFloat(document.getElementById('bmi').value);
+  const cycle_length  = parseFloat(document.getElementById('cycle_length').value);
+  return {
+    age, bmi, cycle_length,
+    stress_level: stress,
+    sleep_quality:    parseFloat(document.getElementById('sleep_quality').value),
+    pain_level:       parseFloat(document.getElementById('pain_level').value),
+    mood_score:       parseFloat(document.getElementById('mood_score').value),
+    hydration_level:  parseFloat(document.getElementById('hydration_level').value),
+    prev_cycle_gap:   parseFloat(document.getElementById('prev_cycle_gap').value),
+    consecutive_spotting_months: parseFloat(document.getElementById('consecutive_spotting_months').value) || 0,
+    rolling_avg_stress_3m: stress,
+    cycle_length_deviation: cycle_length - 28,
+    gap_variability:        parseFloat(document.getElementById('gap_variability').value) / 100,
+    personal_spotting_rate: parseFloat(document.getElementById('personal_spotting_rate').value) / 100,
+    personal_base_gap:      parseFloat(document.getElementById('personal_base_gap').value),
+    month_number: month,
+    travel_disruption:      getToggleVal('travelToggle'),
+    recent_illness:         getToggleVal('illnessToggle'),
+    prev_cycle_had_spotting:getToggleVal('prevSpotToggle'),
+    two_months_ago_spotting:getToggleVal('twoMonthToggle'),
+    activity_level:  parseInt(getChipVal('activityChips') || '1'),
+    stress_trend:    stress >= 7 ? 2 : stress <= 3 ? 0 : 1,
+    bmi_category:    bmi < 18.5 ? 0 : bmi < 25 ? 1 : bmi < 30 ? 2 : 3,
+    age_group:       age <= 17 ? 0 : age <= 25 ? 1 : age <= 35 ? 2 : 3,
+    flow_intensity:  parseInt(getChipVal('flowChips') || '0'),
+    season_autumn:   season === 'autumn'  ? 1 : 0,
+    season_monsoon:  season === 'monsoon' ? 1 : 0,
+    season_summer:   season === 'summer'  ? 1 : 0,
+    season_winter:   season === 'winter'  ? 1 : 0,
+    condition_PCOS:          condition === 'PCOS'          ? 1 : 0,
+    condition_endometriosis: condition === 'endometriosis' ? 1 : 0,
+    condition_none:          condition === 'none'          ? 1 : 0,
+    condition_thyroid:       condition === 'thyroid'       ? 1 : 0,
+    contraceptive_IUD:     contraceptive === 'IUD'     ? 1 : 0,
+    contraceptive_implant: contraceptive === 'implant' ? 1 : 0,
+    contraceptive_none:    contraceptive === 'none'    ? 1 : 0,
+    contraceptive_pill:    contraceptive === 'pill'    ? 1 : 0,
+  };
+}
+
+async function submitPrediction() {
+  document.getElementById('loadingScreen').classList.add('show');
+  try {
+    const response = await fetch(API + '/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildPayload())
+    });
+    if (!response.ok) throw new Error('Server error');
+    const data = await response.json();
+    const pct  = Math.round(data.spotting_probability * 100);
+
+    document.getElementById('resultProb').textContent     = pct + '%';
+    document.getElementById('resultGap').textContent      = data.gap_days_predicted ? data.gap_days_predicted + ' day(s) after spotting begins' : 'No spotting expected';
+    document.getElementById('resultSafe').textContent     = data.safe_window_days ? 'Carry a pad within ' + data.safe_window_days + ' day(s) of spotting' : 'N/A';
+    document.getElementById('resultSpotting').textContent = data.spotting_predicted ? 'Yes — spotting likely' : 'No — direct bleeding likely';
+    document.getElementById('resultRecommendation').innerHTML = data.recommendation.replace(/(\d+ day[s]?)/g, '<strong>$1</strong>');
+
+    const badge = document.getElementById('resultBadge');
+    if (pct >= 60)      { badge.textContent = 'Spotting Likely';      badge.className = 'result-badge badge-likely'; }
+    else if (pct >= 40) { badge.textContent = 'Uncertain — Prepare';  badge.className = 'result-badge badge-uncertain'; }
+    else                { badge.textContent = 'Spotting Unlikely';     badge.className = 'result-badge badge-unlikely'; }
+
+    document.getElementById('loadingScreen').classList.remove('show');
+    transition(3, 4);
+  } catch (err) {
+    document.getElementById('loadingScreen').classList.remove('show');
+    alert('Could not connect to the prediction server. Please ensure the backend is running at ' + API);
+  }
+}
+
+function resetApp() { transition(4, 1); }
+</script>
+</body>
+</html>
