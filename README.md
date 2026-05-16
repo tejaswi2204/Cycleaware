@@ -53,8 +53,7 @@ The models were trained on synthetic data generated to reflect diverse real-worl
 | Backend | FastAPI + Uvicorn |
 | Frontend | HTML, CSS, JavaScript |
 | Data Generation | Python (NumPy, Pandas) |
-| Deployment — Backend | Railway |
-| Deployment — Frontend | Vercel |
+
 
 ---
 
